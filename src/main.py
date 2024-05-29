@@ -1,5 +1,6 @@
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from features import compute_features
+from pca import run_pca
 
 
 parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
@@ -23,6 +24,9 @@ args = parser.parse_args()
 
 if args.mode == "compute_features":
     compute_features(args)
+
+if args.mode == "pca":
+    run_pca(args)
 
 
 
