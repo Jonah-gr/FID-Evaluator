@@ -1,5 +1,6 @@
-import os
 import pickle
+from tqdm import tqdm
+from copy import deepcopy
 from sklearn.decomposition import PCA
 from features import inception
 
@@ -11,14 +12,20 @@ def load_features():
 
 def run_pca(args):
     real_features = load_features()
+    real_features_pca = deepcopy(real_features)
+
+    fake_features = inception(args.path, args.device, noise_levels=real_features["real"].keys(), real=False)
+    fake_features_pca = deepcopy(fake_features)
 
     pca = PCA(n_components=args.n_components)
-    real_features_pca = pca.fit_transform(real_features)
 
-    fake_features = inception(args.path, args.device)
-    fake_features_pca = pca.transform(fake_features)
+    pca.fit(real_features["real"][0.0])
 
+    for noise_level in tqdm(real_features["real"].keys()):
+        real_features_pca["real"][noise_level] = pca.transform(real_features_pca["real"][noise_level])
+        fake_features_pca["fake"][noise_level] = pca.transform(fake_features_pca["fake"][noise_level])
+    
     with open("all_features.pkl", 'wb') as f:
-        pickle.dump((real_features, real_features_pca, fake_features, fake_features_pca), f)
+        pickle.dump({"real": {"no pca": real_features["real"], "pca": real_features_pca["real"]}, "fake": {"no pca": fake_features["fake"], "pca": fake_features_pca["fake"]}}, f)
         print("All features saved to all_features.pkl")
 
