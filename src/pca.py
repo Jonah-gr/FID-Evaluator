@@ -1,31 +1,45 @@
 import pickle
+from collections import defaultdict
 from tqdm import tqdm
-from copy import deepcopy
 from sklearn.decomposition import PCA
-from features import inception
 
+def nested_defaultdict():
+    return defaultdict(nested_defaultdict)
+
+def convert_to_nested_defaultdict(d):
+    if isinstance(d, dict):
+        new_dict = defaultdict(nested_defaultdict)
+        for k, v in d.items():
+            if type(k) is list:
+                new_dict[k] = v
+            else:
+                new_dict[k] = convert_to_nested_defaultdict(v)
+        return new_dict
+    else:
+        return d
+    
 def load_features():
-    with open('features.pkl', 'rb') as file: 
-        features = pickle.load(file) 
-    return features
+    with open('features.pkl', 'rb') as file:
+        features = pickle.load(file)
+    return convert_to_nested_defaultdict(features)
 
 
 def run_pca(args):
-    real_features = load_features()
-    real_features_pca = deepcopy(real_features)
+    features = load_features()
+    real_features = features["real"]
+    fake_features = features["fake"]
 
-    fake_features = inception(args.path, args.device, noise_levels=real_features["real"].keys(), real=False)
-    fake_features_pca = deepcopy(fake_features)
+    args.n_components = args.n_components.split()
+    args.n_components = [int(num) for num in args.n_components]
 
-    pca = PCA(n_components=args.n_components)
+    for n_components in args.n_components:
+        pca = PCA(n_components=n_components)
+        pca.fit(real_features["no pca"][0.0])
 
-    pca.fit(real_features["real"][0.0])
-
-    for noise_level in tqdm(real_features["real"].keys()):
-        real_features_pca["real"][noise_level] = pca.transform(real_features_pca["real"][noise_level])
-        fake_features_pca["fake"][noise_level] = pca.transform(fake_features_pca["fake"][noise_level])
-    
-    with open("all_features.pkl", 'wb') as f:
-        pickle.dump({"real": {"no pca": real_features["real"], "pca": real_features_pca["real"]}, "fake": {"no pca": fake_features["fake"], "pca": fake_features_pca["fake"]}}, f)
-        print("All features saved to all_features.pkl")
-
+        for noise_level in tqdm(real_features["no pca"].keys()):
+            real_features["pca"][n_components][noise_level] = pca.transform(real_features["no pca"][noise_level])
+            fake_features["pca"][n_components][noise_level] = pca.transform(fake_features["no pca"][noise_level])
+        
+    with open("features.pkl", 'wb') as f:
+        pickle.dump(features, f)
+        print("All features saved to features.pkl")
