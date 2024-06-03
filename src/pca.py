@@ -3,8 +3,10 @@ from collections import defaultdict
 from tqdm import tqdm
 from sklearn.decomposition import PCA
 
+
 def nested_defaultdict():
     return defaultdict(nested_defaultdict)
+
 
 def convert_to_nested_defaultdict(d):
     if isinstance(d, dict):
@@ -17,9 +19,10 @@ def convert_to_nested_defaultdict(d):
         return new_dict
     else:
         return d
-    
+
+
 def load_features():
-    with open('features.pkl', 'rb') as file:
+    with open("features.pkl", "rb") as file:
         features = pickle.load(file)
     return convert_to_nested_defaultdict(features)
 
@@ -39,7 +42,7 @@ def run_pca(args):
         for noise_level in tqdm(real_features["no pca"].keys()):
             real_features["pca"][n_components][noise_level] = pca.transform(real_features["no pca"][noise_level])
             fake_features["pca"][n_components][noise_level] = pca.transform(fake_features["no pca"][noise_level])
-        
-    with open("features.pkl", 'wb') as f:
+
+    with open("features.pkl", "wb") as f:
         pickle.dump(features, f)
         print("All features saved to features.pkl")

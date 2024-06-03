@@ -7,22 +7,15 @@ parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
 parser.add_argument("mode", choices=["compute_features", "pca", "fid"])
 
 
-parser.add_argument(
-    "-r", "--real",
-    action="store"
-)
+parser.add_argument("-r", "--real", action="store")
 
 parser.add_argument("-f", "--fake", action="store")
 
-parser.add_argument(
-    "-d", "--device", type=str, default=None, help="Device to use: cuda or cpu"
-)
+parser.add_argument("-d", "--device", type=str, default=None, help="Device to use: cuda or cpu")
 
 parser.add_argument("--noise", default="0.0 0.1 0.2 0.3 0.4")
 
-parser.add_argument(
-    "-n", "--n_components", action="store", default="100"
-)
+parser.add_argument("-n", "--n_components", action="store", default="100")
 
 args = parser.parse_args()
 
@@ -34,9 +27,3 @@ if args.mode == "pca":
 
 if args.mode == "fid":
     get_fid_scores()
-
-
-
-
-
-
