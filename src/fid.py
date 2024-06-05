@@ -54,7 +54,7 @@ def plot_percentage_increases(x_values, data_dict):
 
     plt.xlabel("X values")
     plt.ylabel("Percentage Increase")
-    plt.title("Percentage Increase from Initial Value")
+    plt.title("Percentage Increase from Initial Value (Rectanlges)")
     plt.legend()
     plt.grid(True)
     plt.show()

@@ -1,20 +1,57 @@
 import os
+import numpy as np
 import torch
 import torch.nn as nn
 from tqdm import tqdm
 from torchvision import models, transforms
 from torchvision.models.inception import Inception_V3_Weights
-from PIL import Image
+from PIL import Image, ImageFilter, ImageDraw
 import pickle
 
 
-def add_noise(image, noise_level):
+def add_noise(image, noise_level, noise_type='noise'):
     if noise_level == 0.0:
         return image
-    noisy_image = image + noise_level * torch.randn_like(image)
-    noisy_image = torch.clip(noisy_image, 0.0, 1.0)
+    if noise_type == 'noise':
+        noisy_image = image + noise_level * torch.randn_like(image)
+        noisy_image = torch.clip(noisy_image, 0.0, 1.0)
+    elif noise_type == 'blur':
+        noisy_image = image + noise_level * torch.randn_like(image)
+        noisy_image = apply_gaussian_blur(image, noise_level)
+    elif noise_type == 'rectangles':
+        noisy_image = image + noise_level * torch.randn_like(image)
+        noisy_image = apply_black_rectangles(image, noise_level)
+    
     return noisy_image
 
+
+def apply_gaussian_blur(image, noise_level):
+    pil_image = transforms.ToPILImage()(image).convert("RGB")
+    blur_radius_mapped = noise_level * 10
+    blurred_image = pil_image.filter(ImageFilter.GaussianBlur(radius=blur_radius_mapped))
+    return transforms.ToTensor()(blurred_image)
+
+def apply_black_rectangles(image, noise_level, grid_size=8):
+    pil_image = transforms.ToPILImage()(image).convert("RGB")
+    draw = ImageDraw.Draw(pil_image)
+    width, height = pil_image.size
+    cell_width = width // grid_size
+    cell_height = height // grid_size
+    
+    total_cells = grid_size * grid_size
+    cells_to_fill = int(total_cells * noise_level)
+    
+    cells = [(i, j) for i in range(grid_size) for j in range(grid_size)]
+    np.random.shuffle(cells)
+    
+    for cell in cells[:cells_to_fill]:
+        x1 = cell[0] * cell_width
+        y1 = cell[1] * cell_height
+        x2 = x1 + cell_width
+        y2 = y1 + cell_height
+        draw.rectangle([x1, y1, x2, y2], fill="black")
+    
+    return transforms.ToTensor()(pil_image)
 
 def load_and_preprocess_image(img_path, transform):
     try:
