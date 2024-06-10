@@ -76,8 +76,6 @@ def compute_features(args):
     if "all" in args.noise_types:
         args.noise_types = ["gauss", "blur", "swirl", "rectangles", "salt_and_pepper"]
     if args.real:
-        print("Real images:")
-        real_features = inception(args.real, args.device, [0.0], ["no noise"])
         if not args.fake:
             try:
                 with open("features.pkl", "rb") as f:
@@ -85,16 +83,21 @@ def compute_features(args):
                     fake_features = features["fake"]["no pca"]
             except:
                 print("No previous fake features found")
+        print("Real images:")
+        real_features = inception(args.real, args.device, [0.0], ["no noise"])
+
     if args.fake:
-        print("Fake images:")
-        fake_features = inception(args.fake, args.device, args.noise, args.noise_types)
         if not args.real:
             try:
                 with open("features.pkl", "rb") as f:
                     features = pickle.load(f)
                     real_features = features["real"]["no pca"]
+                    print("Previous real features found")
             except:
                 print("No previous real features found")
+        print("Fake images:")
+        fake_features = inception(args.fake, args.device, args.noise, args.noise_types)
+        
     with open("features.pkl", "wb") as f:
         pickle.dump({"real": {"no pca": real_features}, "fake": {f"no pca": fake_features}}, f)
     print("Features saved to features.pkl")

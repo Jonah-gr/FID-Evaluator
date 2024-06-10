@@ -47,7 +47,7 @@ def get_fid_scores():
 
 
 def calculate_percentage_increases(values):
-    initial_value = values[0]
+    initial_value = abs(values[0])
     percentage_increases = [0.0]
     for value in values[1:]:
         increase = ((value - initial_value) / initial_value) * 100
@@ -60,7 +60,7 @@ def plot_percentage_increases(x_values, data_dict):
     num_cols = 2
     num_rows = math.ceil(num_classes / num_cols)
 
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=(10, 2.5 * num_rows))
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(10, 2.5 * num_rows), sharey=True)
     axes = axes.flatten()
 
     for ax in axes[num_classes:]:
