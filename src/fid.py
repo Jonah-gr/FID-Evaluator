@@ -29,11 +29,16 @@ def get_fid_scores():
     for noise_type in noise_types:
         fid_scores[noise_type] = defaultdict(list)
         for noise_level in noise_levels:
-            fid_scores[noise_type][2048].append(calculate_fid(features["real"]["no pca"], features["fake"]["no pca"][noise_type][noise_level]))
-            for n_components in tqdm(features["fake"]["pca"].keys(), desc=f"Noise Type: {noise_type} | Noise Level: {noise_level}"):
+            fid_scores[noise_type][2048].append(
+                calculate_fid(features["real"]["no pca"], features["fake"]["no pca"][noise_type][noise_level])
+            )
+            for n_components in tqdm(
+                features["fake"]["pca"].keys(), desc=f"Noise Type: {noise_type} | Noise Level: {noise_level}"
+            ):
                 fid_scores[noise_type][n_components].append(
                     calculate_fid(
-                        features["real"]["pca"][n_components], features["fake"]["pca"][n_components][noise_type][noise_level]
+                        features["real"]["pca"][n_components],
+                        features["fake"]["pca"][n_components][noise_type][noise_level],
                     )
                 )
 
@@ -54,12 +59,12 @@ def plot_percentage_increases(x_values, data_dict):
     num_classes = len(data_dict)
     num_cols = 2
     num_rows = math.ceil(num_classes / num_cols)
-    
+
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(10, 2.5 * num_rows))
     axes = axes.flatten()
 
     for ax in axes[num_classes:]:
-        ax.axis('off')
+        ax.axis("off")
 
     for ax, (noise_type, noise_data) in zip(axes, data_dict.items()):
         for key, value_list in noise_data.items():

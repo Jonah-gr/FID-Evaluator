@@ -44,7 +44,9 @@ def run_pca(args):
 
         for noise_type in tqdm(noise_types, desc=f"n_components: {n_components}"):
             for noise_level in noise_levels:
-                fake_features["pca"][n_components][noise_type][noise_level] = pca.transform(fake_features["no pca"][noise_type][noise_level])
+                fake_features["pca"][n_components][noise_type][noise_level] = pca.transform(
+                    fake_features["no pca"][noise_type][noise_level]
+                )
 
     with open("features.pkl", "wb") as f:
         pickle.dump(features, f)
