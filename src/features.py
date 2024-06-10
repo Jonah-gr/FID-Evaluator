@@ -6,33 +6,51 @@ from tqdm import tqdm
 from torchvision import models, transforms
 from torchvision.models.inception import Inception_V3_Weights
 from PIL import Image, ImageFilter, ImageDraw
+from skimage.transform import swirl
+from skimage.util import random_noise
 import pickle
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def add_noise(image, noise_level, noise_type='noise'):
+def add_noise(image, noise_level, noise_types='all'):
+    noise_types_list = ['gauss', 'blur', 'rectangles', 'swirl', 'salt_and_pepper']
+    
     if noise_level == 0.0:
         return image
-    if noise_type == 'noise':
-        noisy_image = image + noise_level * torch.randn_like(image)
-        noisy_image = torch.clip(noisy_image, 0.0, 1.0)
+
+    if noise_types == 'all':
+        for noise_type in noise_types_list:
+            image = apply_noise(image, noise_level, noise_type)
+    else:
+        image = apply_noise(image, noise_level, noise_types)
+    
+    return image.to(device)
+
+def apply_noise(image, noise_level, noise_type):
+    if noise_type == 'gauss':
+        noisy_image = image + noise_level * torch.randn_like(image).to(device)
+        noisy_image = torch.clamp(noisy_image, 0.0, 1.0)
     elif noise_type == 'blur':
-        noisy_image = image + noise_level * torch.randn_like(image)
         noisy_image = apply_gaussian_blur(image, noise_level)
     elif noise_type == 'rectangles':
-        noisy_image = image + noise_level * torch.randn_like(image)
         noisy_image = apply_black_rectangles(image, noise_level)
+    elif noise_type == 'swirl':
+        noisy_image = apply_swirl(image, noise_level)
+    elif noise_type == 'salt_and_pepper':
+        noisy_image = apply_salt_and_pepper(image, noise_level)
+    else:
+        raise ValueError(f"Unknown noise type: {noise_type}")
     
     return noisy_image
 
-
 def apply_gaussian_blur(image, noise_level):
-    pil_image = transforms.ToPILImage()(image).convert("RGB")
+    pil_image = transforms.ToPILImage()(image.cpu()).convert("RGB")
     blur_radius_mapped = noise_level * 10
     blurred_image = pil_image.filter(ImageFilter.GaussianBlur(radius=blur_radius_mapped))
-    return transforms.ToTensor()(blurred_image)
+    return transforms.ToTensor()(blurred_image).to(device)
 
 def apply_black_rectangles(image, noise_level, grid_size=8):
-    pil_image = transforms.ToPILImage()(image).convert("RGB")
+    pil_image = transforms.ToPILImage()(image.cpu()).convert("RGB")
     draw = ImageDraw.Draw(pil_image)
     width, height = pil_image.size
     cell_width = width // grid_size
@@ -51,50 +69,70 @@ def apply_black_rectangles(image, noise_level, grid_size=8):
         y2 = y1 + cell_height
         draw.rectangle([x1, y1, x2, y2], fill="black")
     
-    return transforms.ToTensor()(pil_image)
+    return transforms.ToTensor()(pil_image).to(device)
 
-def load_and_preprocess_image(img_path, transform):
-    try:
-        img = Image.open(img_path).convert("RGB")
-        img = transform(img)
-        img = img.unsqueeze(0)
-        return img
-    except Exception as e:
-        print(f"Error loading image {img_path}: {e}")
-        return None
+def apply_swirl(image, noise_level):
+    pil_image = transforms.ToPILImage()(image).convert("RGB")
+    np_image = np.array(pil_image)
+    swirled_image = swirl(np_image, strength=noise_level * 15, radius=250)  
+    swirled_image = (swirled_image * 255).astype(np.uint8)  
+    return transforms.ToTensor()(Image.fromarray(swirled_image))
+
+def apply_salt_and_pepper(image, noise_level):
+    pil_image = transforms.ToPILImage()(image).convert("RGB")
+    image_np = np.array(pil_image)
+    
+    row, col, ch = image_np.shape
+    s_vs_p = 0.5
+    amount = noise_level / 10 
+    out = np.copy(image_np)
+    
+    num_salt = np.ceil(amount * image_np.size * s_vs_p)
+    coords = [np.random.randint(0, i - 1, int(num_salt)) for i in image_np.shape]
+    out[coords[0], coords[1], :] = 255
+
+    num_pepper = np.ceil(amount * image_np.size * (1. - s_vs_p))
+    coords = [np.random.randint(0, i - 1, int(num_pepper)) for i in image_np.shape]
+    out[coords[0], coords[1], :] = 0
+    
+    noisy_image_pil = Image.fromarray(out)
+    return transforms.ToTensor()(noisy_image_pil).to(device)
 
 
-def inception(path, device, noise_levels):
-    if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def load_and_preprocess_image(image_path, preprocess):
+    image = Image.open(image_path).convert('RGB')
+    image = preprocess(image)
+    return image.to(device)
 
-    model = models.inception_v3(weights=Inception_V3_Weights.DEFAULT)
-    model.fc = nn.Identity()
+def inception(images_path, device, noise_levels, noise_types):
+    model = models.inception_v3(weights=Inception_V3_Weights.IMAGENET1K_V1, aux_logits=True)
+    model = nn.Sequential(model, nn.Softmax(dim=1)).to(device)
     model.eval()
-    model.to(device)
-
-    preprocess = transforms.Compose(
-        [
-            transforms.Resize(299),
-            transforms.CenterCrop(299),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ]
-    )
-    features_dict = {}
+    
+    preprocess = transforms.Compose([
+        transforms.Resize(299),
+        transforms.CenterCrop(299),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+    
+    features_dict = {noise_type: {} for noise_type in noise_types}
+    
     with torch.no_grad():
-        for root, dir, files in os.walk(path):
+        for noise_type in noise_types:
             for noise_level in noise_levels:
+                print(f"Processing {noise_type} noise at level {noise_level}")
                 features = []
-                for img_path in tqdm(files, desc=f"noise_level: {noise_level}"):
-                    img = load_and_preprocess_image(root + "/" + img_path, preprocess)
-                    img = img.to(device)
-                    img = add_noise(img, noise_level)
-                    feature = model(img).cpu().numpy().flatten()
-                    features.append(feature)
-                features_dict[noise_level] = features
+                for root, _, files in os.walk(images_path):
+                    for img_path in tqdm(files):
+                        img = load_and_preprocess_image(os.path.join(root, img_path), preprocess)
+                        img = add_noise(img, noise_level, noise_type)
+                        feature = model(img.unsqueeze(0)).cpu().numpy().flatten()
+                        features.append(feature)
+                features_dict[noise_type][noise_level] = features
+    if "no noise" in noise_types:
+        return features_dict["no noise"][0.0]
     return features_dict
-
 
 def compute_features(args):
     real_features = {}
@@ -102,9 +140,14 @@ def compute_features(args):
 
     args.noise = args.noise.split()
     args.noise = [float(num) for num in args.noise]
+    if 0.0 not in args.noise:
+        args.noise.append(0.0)
+    args.noise.sort()
+
+    args.noise_types = args.noise_types.split()
+    if "all" in args.noise_types:
+        args.noise_types = ["gauss", "blur", "swirl", "rectangles", "salt_and_pepper"]
     if args.real:
-        print("Real images:")
-        real_features = inception(args.real, args.device, args.noise)
         if not args.fake:
             try:
                 with open("features.pkl", "rb") as f:
@@ -112,16 +155,21 @@ def compute_features(args):
                     fake_features = features["fake"]["no pca"]
             except:
                 print("No previous fake features found")
+        print("Real images:")
+        real_features = inception(args.real, device, [0.0], ["no noise"])
+
     if args.fake:
-        print("Fake images:")
-        fake_features = inception(args.fake, args.device, args.noise)
         if not args.real:
             try:
                 with open("features.pkl", "rb") as f:
                     features = pickle.load(f)
                     real_features = features["real"]["no pca"]
+                    print("Previous real features found")
             except:
                 print("No previous real features found")
+        print("Fake images:")
+        fake_features = inception(args.fake, device, args.noise, args.noise_types)
+        
     with open("features.pkl", "wb") as f:
         pickle.dump({"real": {"no pca": real_features}, "fake": {f"no pca": fake_features}}, f)
     print("Features saved to features.pkl")

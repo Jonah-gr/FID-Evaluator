@@ -15,7 +15,7 @@ parser.add_argument("-d", "--device", type=str, default=None, help="Device to us
 
 parser.add_argument("--noise", default="0.0 0.1 0.2 0.3 0.4")
 
-parser.add_argument("--noise_type", type=str, default="noise", help="Type of noise to apply: noise, blur, rectangles")
+parser.add_argument("--noise_types", type=str, default="gauss", help="Type of noise to apply: gauss, blur, rectangles, swirl, salt&pepper")
 
 parser.add_argument("-n", "--n_components", action="store", default="100")
 
