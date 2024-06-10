@@ -8,7 +8,7 @@ from PIL import Image
 import pickle
 
 
-def add_noise(image, noise_level):
+def add_noise(image, noise_level, noise_type):
     if noise_level == 0.0:
         return image
     noisy_image = image + noise_level * torch.randn_like(image)
@@ -27,7 +27,7 @@ def load_and_preprocess_image(img_path, transform):
         return None
 
 
-def inception(path, device, noise_levels):
+def inception(path, device, noise_levels, noise_types):
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -44,18 +44,21 @@ def inception(path, device, noise_levels):
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )
-    features_dict = {}
+    features_dict = {k: {} for k in noise_types}
     with torch.no_grad():
         for root, dir, files in os.walk(path):
-            for noise_level in noise_levels:
-                features = []
-                for img_path in tqdm(files, desc=f"noise_level: {noise_level}"):
-                    img = load_and_preprocess_image(root + "/" + img_path, preprocess)
-                    img = img.to(device)
-                    img = add_noise(img, noise_level)
-                    feature = model(img).cpu().numpy().flatten()
-                    features.append(feature)
-                features_dict[noise_level] = features
+            for noise_type in noise_types:
+                for noise_level in noise_levels:
+                    features = []
+                    for img_path in tqdm(files, desc=f"Noise Type: {noise_type} | Noise Level: {noise_level}"):
+                        img = load_and_preprocess_image(root + "/" + img_path, preprocess)
+                        img = img.to(device)
+                        img = add_noise(img, noise_level, noise_type)
+                        feature = model(img).cpu().numpy().flatten()
+                        features.append(feature)
+                    features_dict[noise_type][noise_level] = features
+    if "no noise" in noise_types:
+        return features_dict["no noise"][0.0]
     return features_dict
 
 
@@ -65,9 +68,16 @@ def compute_features(args):
 
     args.noise = args.noise.split()
     args.noise = [float(num) for num in args.noise]
+    if 0.0 not in args.noise:
+        args.noise.append(0.0)
+    args.noise.sort()
+
+    args.noise_types = args.noise_types.split()
+    if "all" in args.noise_types:
+        args.noise_types = ["gauss", "blur", "swirl", "rectangles", "salt_and_pepper"]
     if args.real:
         print("Real images:")
-        real_features = inception(args.real, args.device, args.noise)
+        real_features = inception(args.real, args.device, [0.0], ["no noise"])
         if not args.fake:
             try:
                 with open("features.pkl", "rb") as f:
@@ -77,7 +87,7 @@ def compute_features(args):
                 print("No previous fake features found")
     if args.fake:
         print("Fake images:")
-        fake_features = inception(args.fake, args.device, args.noise)
+        fake_features = inception(args.fake, args.device, args.noise, args.noise_types)
         if not args.real:
             try:
                 with open("features.pkl", "rb") as f:
