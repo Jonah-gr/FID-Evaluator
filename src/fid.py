@@ -60,7 +60,7 @@ def plot_percentage_increases(x_values, data_dict):
     num_cols = 2
     num_rows = math.ceil(num_classes / num_cols)
 
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=(10, 2.5 * num_rows), sharey=True)
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(10, 2.5 * num_rows))
     axes = axes.flatten()
 
     for ax in axes[num_classes:]:
