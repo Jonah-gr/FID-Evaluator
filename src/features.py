@@ -195,7 +195,7 @@ def inception(path, device, noise_levels, noise_types):
                         img = load_and_preprocess_image(os.path.join(root, img_path), preprocess)
                         img = add_noise(img, noise_level, noise_type)
                         img = img.to(device)
-                        feature = model(img).numpy().flatten()
+                        feature = model(img).cpu().numpy().flatten()
                         features.append(feature)
                     features_dict[noise_type][noise_level] = features
     if "no noise" in noise_types:
