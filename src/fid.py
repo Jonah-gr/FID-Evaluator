@@ -8,6 +8,16 @@ from scipy.linalg import sqrtm
 
 
 def calculate_fid(real_features, generated_features):
+    """
+    Calculate the Fréchet Inception Distance (FID) between real and generated features.
+
+    Args:
+        real_features (numpy.ndarray): Features from real images.
+        generated_features (numpy.ndarray): Features from generated images.
+
+    Returns:
+        float: The FID score.
+    """
     mu1, sigma1 = np.mean(real_features, axis=0), np.cov(real_features, rowvar=False)
     mu2, sigma2 = np.mean(generated_features, axis=0), np.cov(generated_features, rowvar=False)
     ssdiff = np.sum((mu1 - mu2) ** 2.0)
@@ -19,6 +29,13 @@ def calculate_fid(real_features, generated_features):
 
 
 def get_fid_scores():
+    """
+    Load features from a pickle file and calculate FID scores for various noise types and levels.
+    Plot the percentage increase in FID scores.
+
+    Returns:
+        None
+    """
     with open("features.pkl", "rb") as file:
         features = pickle.load(file)
     fid_scores = {}
@@ -47,6 +64,15 @@ def get_fid_scores():
 
 
 def calculate_percentage_increases(values):
+    """
+    Calculate the percentage increase from the initial value for a list of values.
+
+    Args:
+        values (list of float): List of values to calculate the percentage increase.
+
+    Returns:
+        list of float: List of percentage increases.
+    """
     initial_value = abs(values[0])
     percentage_increases = [0.0]
     for value in values[1:]:
@@ -56,6 +82,16 @@ def calculate_percentage_increases(values):
 
 
 def plot_percentage_increases(x_values, data_dict):
+    """
+    Plot the percentage increases for different noise types and PCA components.
+
+    Args:
+        x_values (iterable): X-axis values (noise levels).
+        data_dict (dict): Dictionary containing FID scores for different noise types and PCA components.
+
+    Returns:
+        None
+    """
     num_classes = len(data_dict)
     num_cols = 2
     num_rows = math.ceil(num_classes / num_cols)

@@ -11,6 +11,17 @@ from skimage.transform import swirl
 
 
 def add_noise(image, noise_level, noise_type):
+    """
+    Adds specified noise to an image.
+
+    Parameters:
+        image (Tensor): The input image tensor.
+        noise_level (float): The level of noise to be added.
+        noise_type (str): The type of noise to add (e.g., "gauss", "blur", "rectangles", "swirl", "salt_and_pepper").
+
+    Returns:
+        Tensor: The noisy image tensor.
+    """
     if noise_level == 0.0:
         return image
     image = image.squeeze(0)
@@ -32,6 +43,16 @@ def add_noise(image, noise_level, noise_type):
 
 
 def apply_gaussian_blur(image, noise_level):
+    """
+    Applies Gaussian blur to an image.
+
+    Parameters:
+        image (Tensor): The input image tensor.
+        noise_level (float): The level of blur to apply.
+
+    Returns:
+        Tensor: The blurred image tensor.
+    """
     pil_image = transforms.ToPILImage()(image).convert("RGB")
     blur_radius_mapped = noise_level * 10
     blurred_image = pil_image.filter(ImageFilter.GaussianBlur(radius=blur_radius_mapped))
@@ -39,6 +60,17 @@ def apply_gaussian_blur(image, noise_level):
 
 
 def apply_black_rectangles(image, noise_level, grid_size=8):
+    """
+    Applies black rectangles to an image.
+
+    Parameters:
+        image (Tensor): The input image tensor.
+        noise_level (float): The level of rectangles to apply.
+        grid_size (int): The grid size for the rectangles.
+
+    Returns:
+        Tensor: The image tensor with black rectangles.
+    """
     pil_image = transforms.ToPILImage()(image).convert("RGB")
     draw = ImageDraw.Draw(pil_image)
     width, height = pil_image.size
@@ -62,6 +94,16 @@ def apply_black_rectangles(image, noise_level, grid_size=8):
 
 
 def apply_swirl(image, noise_level):
+    """
+    Applies swirl distortion to an image.
+
+    Parameters:
+        image (Tensor): The input image tensor.
+        noise_level (float): The level of swirl to apply.
+
+    Returns:
+        Tensor: The swirled image tensor.
+    """
     pil_image = transforms.ToPILImage()(image).convert("RGB")
     np_image = np.array(pil_image)
     swirled_image = swirl(np_image, strength=noise_level * 15, radius=250)
@@ -70,6 +112,16 @@ def apply_swirl(image, noise_level):
 
 
 def apply_salt_and_pepper(image, noise_level):
+    """
+    Applies salt-and-pepper noise to an image.
+
+    Parameters:
+        image (Tensor): The input image tensor.
+        noise_level (float): The level of noise to apply.
+
+    Returns:
+        Tensor: The image tensor with salt-and-pepper noise.
+    """
     pil_image = transforms.ToPILImage()(image).convert("RGB")
     image_np = np.array(pil_image)
 
@@ -91,6 +143,16 @@ def apply_salt_and_pepper(image, noise_level):
 
 
 def load_and_preprocess_image(img_path, transform):
+    """
+    Loads and preprocesses an image.
+
+    Parameters:
+        img_path (str): The path to the image file.
+        transform (Compose): The transformations to apply to the image.
+
+    Returns:
+        Tensor: The preprocessed image tensor.
+    """
     try:
         img = Image.open(img_path).convert("RGB")
         img = transform(img)
@@ -102,6 +164,18 @@ def load_and_preprocess_image(img_path, transform):
 
 
 def inception(path, device, noise_levels, noise_types):
+    """
+    Extracts features from images using the Inception v3 model with optional noise.
+
+    Parameters:
+        path (str): The path to the directory containing images.
+        device (torch.device): The device to run the model on (CPU or GPU).
+        noise_levels (list of float): The levels of noise to apply.
+        noise_types (list of str): The types of noise to apply.
+
+    Returns:
+        dict: A dictionary containing the extracted features for each noise type and level.
+    """
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -118,7 +192,7 @@ def inception(path, device, noise_levels, noise_types):
                 for noise_level in noise_levels:
                     features = []
                     for img_path in tqdm(files, desc=f"Noise Type: {noise_type} | Noise Level: {noise_level}"):
-                        img = load_and_preprocess_image(root + "/" + img_path, preprocess)
+                        img = load_and_preprocess_image(os.path.join(root, img_path), preprocess)
                         img = add_noise(img, noise_level, noise_type)
                         img = img.to(device)
                         feature = model(img).numpy().flatten()
@@ -130,6 +204,15 @@ def inception(path, device, noise_levels, noise_types):
 
 
 def compute_features(args):
+    """
+    Computes features for real and fake images, optionally adding noise, and saves them to a file.
+
+    Parameters:
+        args (Namespace): The command-line arguments containing paths and settings.
+
+    Returns:
+        None
+    """
     real_features = {}
     fake_features = {}
 
@@ -166,5 +249,32 @@ def compute_features(args):
         fake_features = inception(args.fake, args.device, args.noise, args.noise_types)
 
     with open("features.pkl", "wb") as f:
-        pickle.dump({"real": {"no pca": real_features}, "fake": {f"no pca": fake_features}}, f)
+        pickle.dump({"real": {"no pca": real_features}, "fake": {"no pca": fake_features}}, f)
     print("Features saved to features.pkl")
+
+
+if __name__ == "__main__":
+    import requests
+    import matplotlib.pyplot as plt
+
+    if not os.path.exists("dog.jpg"):
+        url = "https://media.istockphoto.com/id/1482199015/de/foto/gl%C3%BCcklicher-welpe-welsh-corgi-14-wochen-alt-hund-zwinkert-keucht-und-sitzt-isoliert-auf-wei%C3%9F.jpg?s=1024x1024&w=is&k=20&c=DE23IwIjKr-soWj36gsQgAY42HrYxRzfreZQwPJ5oms="
+        response = requests.get(url)
+        with open("dog.jpg", "wb") as file:
+            file.write(response.content)
+    image = "dog.jpg"
+
+    preprocess = transforms.Compose([transforms.Resize(299), transforms.CenterCrop(299), transforms.ToTensor()])
+
+    fig, axs = plt.subplots(5, 10, figsize=(20, 12))
+    noise_types = ["gauss", "blur", "swirl", "rectangles", "salt_and_pepper"]
+    for i in range(5):
+        for k in np.arange(0.0, 1.0, 0.1):
+            img = load_and_preprocess_image(image, preprocess)
+            img = add_noise(img, k, noise_types[i])
+
+            img = transforms.ToPILImage()(img.squeeze(0)).convert("RGB")
+
+            axs[i][int(k * 10)].imshow(img)
+
+    plt.show()
