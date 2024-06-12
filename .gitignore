@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# pickle
+*.pkl
+
+# Example image
+dog.jpg
+
 # C extensions
 *.so
 

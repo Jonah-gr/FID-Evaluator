@@ -1,7 +1,7 @@
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
-from features import compute_features
-from pca import run_pca
-from fid import get_fid_scores
+from src.features import compute_features
+from src.pca import run_pca
+from src.fid import get_fid_scores
 
 
 parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)

@@ -176,8 +176,11 @@ def inception(path, device, noise_levels, noise_types):
     Returns:
         dict: A dictionary containing the extracted features for each noise type and level.
     """
+    real_features = True if "no noise" in noise_types else False
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if not os.path.exists("checkpoints"):
+        os.mkdir("checkpoints")
 
     model = models.inception_v3(weights=Inception_V3_Weights.DEFAULT)
     model.fc = nn.Identity()
@@ -198,7 +201,9 @@ def inception(path, device, noise_levels, noise_types):
                         feature = model(img).cpu().numpy().flatten()
                         features.append(feature)
                     features_dict[noise_type][noise_level] = features
-    if "no noise" in noise_types:
+                    with open(f"checkpoints/checkpoint_{'real' if real_features else 'fake'}.pkl", "wb") as f:
+                        pickle.dump(features_dict, f)
+    if real_features:
         return features_dict["no noise"][0.0]
     return features_dict
 
@@ -258,7 +263,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     if not os.path.exists("dog.jpg"):
-        url = "https://media.istockphoto.com/id/1482199015/de/foto/gl%C3%BCcklicher-welpe-welsh-corgi-14-wochen-alt-hund-zwinkert-keucht-und-sitzt-isoliert-auf-wei%C3%9F.jpg?s=1024x1024&w=is&k=20&c=DE23IwIjKr-soWj36gsQgAY42HrYxRzfreZQwPJ5oms="
+        url = "https://images.unsplash.com/photo-1624956578877-4948166c5dcb?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
         response = requests.get(url)
         with open("dog.jpg", "wb") as file:
             file.write(response.content)
