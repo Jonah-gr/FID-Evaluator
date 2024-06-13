@@ -158,9 +158,10 @@ def load_and_preprocess_image(img_path, transform):
             if file.lower().endswith(("png", "jpg", "jpeg")):
                 file_path = os.path.join(root, file)
                 try:
-                    image = Image.open(file_path)
+                    image = Image.open(file_path).convert("RGB")
                     image = transform(image)
-                    yield image.unsqueeze(0)
+                    image = image.unsqueeze(0)
+                    yield image
                 except Exception as e:
                     print(f"Error loading image {file_path}: {e}")
 
@@ -171,7 +172,7 @@ def inception(path, device, noise_levels, noise_types):
 
     Parameters:
         path (str): The path to the directory containing images.
-        device (torch.device): The device to run the model on (CPU or GPU).
+        device (str): The device to run the model on (cpu or cuda).
         noise_levels (list of float): The levels of noise to apply.
         noise_types (list of str): The types of noise to apply.
 
@@ -272,19 +273,16 @@ if __name__ == "__main__":
         response = requests.get(url)
         with open("dog.jpg", "wb") as file:
             file.write(response.content)
-    image = "dog.jpg"
 
     preprocess = transforms.Compose([transforms.Resize(299), transforms.CenterCrop(299), transforms.ToTensor()])
 
     fig, axs = plt.subplots(5, 10, figsize=(20, 12))
     noise_types = ["gauss", "blur", "swirl", "rectangles", "salt_and_pepper"]
+
+    image = next(load_and_preprocess_image(".", preprocess))
     for i in range(5):
         for k in np.arange(0.0, 1.0, 0.1):
-            img = load_and_preprocess_image(image, preprocess)
-            img = add_noise(img, k, noise_types[i])
-
+            img = add_noise(image, k, noise_types[i])
             img = transforms.ToPILImage()(img.squeeze(0)).convert("RGB")
-
             axs[i][int(k * 10)].imshow(img)
-
     plt.show()
