@@ -1,7 +1,7 @@
 # FID-Evaluator
 The FID Evaluator is a tool for evaluating the Fréchet Inception Distance (FID). The FID is used to evaluate the quality of synthesized to real images. 
 To do this, the feature vectors of the images are first calculated using the [Inception v3](https://en.wikipedia.org/wiki/Inceptionv3) model and then a value is determined using the following formula:
-$$ d_F(\mathcal{N}(\mu, \sum), \mathcal{N}(\mu', \sum'))^2 = ||\mu - \mu'||_2^2 + \text{tr}\left(\sum + \sum' - 2(\sum\sum')^{\frac{1}{2}}\right) $$
+$$d_F\left(\mathcal{N}\left(\mu, \sum\right), \mathcal{N}\left(\mu', \sum'\right)\right)^2 = ||\mu - \mu'||_2^2 + \text{tr}\left(\sum + \sum' - 2\left(\sum\sum'\right)^{\frac{1}{2}}\right)$$
 
 We use a principal component analysis (PCA) to reduce the embedding space in order to better match the dimensional space (2048 dimensions) to the real images.
 To evaluate this, we noise the synthesized images and compare the percentage increase starting from the first FID value of the respective dimensional reduction of the embedding space.
@@ -9,6 +9,9 @@ To evaluate this, we noise the synthesized images and compare the percentage inc
 # Table of Contents
 1. [Installation](#installation)
 2. [Usage](#usage)
+    - [Compute Features](#1-compute-features)
+    - [Perform PCA](#2-perform-pca)
+    - [Calculate FID](#3-calculate-fid)
 3. [Explanation](#explanation)
 
 
@@ -25,11 +28,13 @@ pip install -r requirements.txt
 The following three steps need to be executed after each other: compute_features, pca, and fid.
 
 
-1. Compute Features
+## 1. Compute Features
 
 To compute features from real and fake images, use the compute_features mode:
 
-`python -m src.main compute_features -r /path/to/real/images -f /path/to/fake/images --noise "0.25, 0.5" --noise_types all`
+```bash
+python -m src.main compute_features -r /path/to/real/images -f /path/to/fake/images --noise "0.25, 0.5" --noise_types all
+```
 
 | Command | Description | Tip |
 | --- | --- | --- |
@@ -42,11 +47,13 @@ To compute features from real and fake images, use the compute_features mode:
 This will compute features from the specified real and fake images, with optional noise applied. The computed features will be saved to a pickle file.
 
 
-2. Perform PCA
+## 2. Perform PCA
 
 To perform PCA on the computed features, use the pca mode:
 
-`python -m src.main pca -n "10 25 50 100 200 300"`
+```bash
+python -m src.main pca -n "10 25 50 100 200 300"
+```
 
 | Command | Description | Tip |
 | --- | --- | --- |
@@ -54,12 +61,14 @@ To perform PCA on the computed features, use the pca mode:
 
 This will perform PCA on the computed features with the specified number of components. The transformed features will be saved back to the pickle file.
 
-3. Calculate FID
+## 3. Calculate FID
    
 To calculate the FID score, use the fid mode:
 
 
-`python -m src.main --mode fid`
+```bash
+python -m src.main fid
+```
 
 This will load the features from the pickle file and calculate the FID score for the different noise types and levels. 
 The plots will show the percentage increase of the FID scores and not the FID itself.
@@ -97,10 +106,7 @@ features_dict = {"real":
 ```
 The respective feature vectors can then be found in the lists.
 
-The graphic below shows the different noise types with noise levels from 0 to 1:
-![Figure 1](/public/Figure_1.png)
-
-The program supports 5 different noise types: 
+The FID-Evaluator supports 5 different noise types: 
 
 | noise_type | Description |
 | --- | --- |
@@ -109,3 +115,6 @@ The program supports 5 different noise types:
 | "swirl" | swirled images |
 | "rectangles" | implanted black rectangles |
 | "salt_and_pepper" | salt and pepper noise |
+
+The graphic below shows the different noise types with noise levels from 0 to 1:
+![Figure 1](/public/Figure_1.png)
