@@ -7,4 +7,3 @@ numpy=1.26
 requests=2.32
 scipy=1.13
 matplotlib=3.9
-scikit-image=0.23
