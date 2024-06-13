@@ -153,14 +153,16 @@ def load_and_preprocess_image(img_path, transform):
     Returns:
         Tensor: The preprocessed image tensor.
     """
-    try:
-        img = Image.open(img_path).convert("RGB")
-        img = transform(img)
-        img = img.unsqueeze(0)
-        return img
-    except Exception as e:
-        print(f"Error loading image {img_path}: {e}")
-        return None
+    for root, _, files in os.walk(img_path):
+        for file in files:
+            if file.lower().endswith(("png", "jpg", "jpeg")):
+                file_path = os.path.join(root, file)
+                try:
+                    image = Image.open(file_path)
+                    image = transform(image)
+                    yield image.unsqueeze(0)
+                except Exception as e:
+                    print(f"Error loading image {file_path}: {e}")
 
 
 def inception(path, device, noise_levels, noise_types):
@@ -189,20 +191,23 @@ def inception(path, device, noise_levels, noise_types):
 
     preprocess = transforms.Compose([transforms.Resize(299), transforms.CenterCrop(299), transforms.ToTensor()])
     features_dict = {k: {} for k in noise_types}
+
     with torch.no_grad():
-        for root, dir, files in os.walk(path):
-            for noise_type in noise_types:
-                for noise_level in noise_levels:
-                    features = []
-                    for img_path in tqdm(files, desc=f"Noise Type: {noise_type} | Noise Level: {noise_level}"):
-                        img = load_and_preprocess_image(os.path.join(root, img_path), preprocess)
-                        img = add_noise(img, noise_level, noise_type)
-                        img = img.to(device)
-                        feature = model(img).cpu().numpy().flatten()
-                        features.append(feature)
-                    features_dict[noise_type][noise_level] = features
-                    with open(f"checkpoints/checkpoint_{'real' if real_features else 'fake'}.pkl", "wb") as f:
-                        pickle.dump(features_dict, f)
+        for noise_type in noise_types:
+            for noise_level in noise_levels:
+                features = []
+                for img in tqdm(
+                    load_and_preprocess_image(path, preprocess),
+                    desc=f"Noise Type: {noise_type} | Noise Level: {noise_level}",
+                    total=len(os.listdir(path)),
+                ):
+                    img = add_noise(img, noise_level, noise_type)
+                    img = img.to(device)
+                    feature = model(img).cpu().numpy().flatten()
+                    features.append(feature)
+                features_dict[noise_type][noise_level] = features
+                with open(f"checkpoints/checkpoint_{'real' if real_features else 'fake'}.pkl", "wb") as f:
+                    pickle.dump(features_dict, f)
     if real_features:
         return features_dict["no noise"][0.0]
     return features_dict
