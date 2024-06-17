@@ -2,8 +2,9 @@ torch == 2.3
 torchvision == 0.18
 Pillow == 10.3.0
 tqdm == 4.66
-scikit-learn == 1.5
-numpy == 1.26
-requests == 2.32
-scipy == 1.13
-matplotlib == 3.9
+scikit-learn
+scikit-image
+numpy
+requests
+scipy
+matplotlib
