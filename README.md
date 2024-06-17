@@ -33,7 +33,7 @@ The following three steps need to be executed after each other: compute_features
 To compute features from real and fake images, use the compute_features mode:
 
 ```bash
-python -m src.main compute_features -r /path/to/real/images -f /path/to/fake/images --noise "0.25, 0.5" --noise_types all
+python -m src.main compute_features -r /path/to/real/images -f /path/to/fake/images --noise "0.25 0.5" --noise_types all
 ```
 
 | Command | Description | Tip |
