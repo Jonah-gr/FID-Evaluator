@@ -227,13 +227,13 @@ def compute_features(args):
     real_features = {}
     fake_features = {}
 
-    args.noise = args.noise.split()
+    args.noise = args.noise.replace(",", "").split()
     args.noise = [float(num) for num in args.noise]
     if 0.0 not in args.noise:
         args.noise.append(0.0)
     args.noise.sort()
 
-    args.noise_types = args.noise_types.split()
+    args.noise_types = args.noise_types.replace(",", "").split()
     if "all" in args.noise_types:
         args.noise_types = ["gauss", "blur", "swirl", "rectangles", "salt_and_pepper"]
     if args.real:

@@ -62,7 +62,7 @@ def run_pca(args):
     real_features = features["real"]
     fake_features = features["fake"]
 
-    args.n_components = args.n_components.split()
+    args.n_components = args.n_components.replace(",", "").split()
     args.n_components = [int(num) for num in args.n_components]
 
     noise_types = fake_features["no pca"].keys()

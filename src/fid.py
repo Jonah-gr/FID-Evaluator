@@ -1,4 +1,3 @@
-import math
 import pickle
 from tqdm import tqdm
 from collections import defaultdict
@@ -81,12 +80,12 @@ def calculate_percentage_increases(values):
     return percentage_increases
 
 
-def plot_percentage_increases(x_values, data_dict):
+def plot_percentage_increases(noise_levels, data_dict):
     """
     Plot the percentage increases for different noise types and PCA components.
 
     Args:
-        x_values (iterable): X-axis values (noise levels).
+        noise_levels (iterable): X-axis values (noise levels).
         data_dict (dict): Dictionary containing FID scores for different noise types and PCA components.
 
     Returns:
@@ -94,24 +93,32 @@ def plot_percentage_increases(x_values, data_dict):
     """
     num_classes = len(data_dict)
     num_cols = 2
-    num_rows = math.ceil(num_classes / num_cols)
+    num_rows = num_classes
 
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=(10, 2.5 * num_rows))
-    axes = axes.flatten()
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, 5 * num_rows))
+    axes = axes.reshape(num_rows, num_cols)
 
-    for ax in axes[num_classes:]:
-        ax.axis("off")
+    for i, (noise_type, noise_data) in enumerate(data_dict.items()):
+        ax1 = axes[i, 0]
+        for n_components, fid_scores in noise_data.items():
+            y_values_noise = calculate_percentage_increases(fid_scores)
+            ax1.plot(noise_levels, y_values_noise, marker="o", label=f"{n_components} components")
+        # ax1.set_title(f"Noise Type: {noise_type} - Percentage Increase vs. Noise Levels")
+        # ax1.set_xlabel("Noise level")
+        # ax1.set_ylabel("Percentage Increase")
+        ax1.grid(True)
 
-    for ax, (noise_type, noise_data) in zip(axes, data_dict.items()):
-        for key, value_list in noise_data.items():
-            y_values = calculate_percentage_increases(value_list)
-            ax.plot(x_values, y_values, marker="o", label=f"{key}")
-
-        ax.set_title(f"Noise Type: {noise_type}")
-        ax.set_xlabel("Noise level")
-        ax.set_ylabel("FID: Percentage Increase")
-        ax.legend()
-        ax.grid(True)
-
+        ax2 = axes[i, 1]
+        x_values_components = []
+        y_values_components = []
+        for n_components, fid_scores in sorted(noise_data.items()):
+            y_values_components.append(np.mean(calculate_percentage_increases(fid_scores)[1:]))
+            x_values_components.append(n_components)
+        ax2.plot(x_values_components, y_values_components, marker="o")
+        # ax2.set_title(f"Noise Type: {noise_type} - Mean Percentage Increase vs. n_components")
+        # ax2.set_xlabel("n_components")
+        # ax2.set_ylabel("Mean Percentage Increase")
+        ax2.grid(True)
+    axes[0, 0].legend()
     fig.tight_layout()
     plt.show()
