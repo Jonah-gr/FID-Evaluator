@@ -1,4 +1,5 @@
 import os
+import re
 import torch
 import pickle
 import numpy as np
@@ -36,7 +37,7 @@ def add_noise(image, noise_type, noise_level):
     elif noise_type == "salt_and_pepper":
         noisy_image = apply_salt_and_pepper(image, noise_level)
     elif noise_type.startswith("mix"):
-        mix_noise_types = noise_type.replace(",", "")[5:-1].split()
+        mix_noise_types = noise_type[5:-1].split()
         noisy_image = apply_mix_noise(image, mix_noise_types, noise_level)
     else:
         raise ValueError(f"Unknown noise type: {noise_type}")
@@ -145,6 +146,17 @@ def apply_salt_and_pepper(image, noise_level):
 
 
 def apply_mix_noise(image, mix_noise_types, noise_level):
+    """
+    Applies a mixture of different types of noise to an image.
+
+    Parameters:
+        image (Tensor): The input image tensor.
+        mix_noise_types (List[str]): A list of noise types to apply to the image.
+        noise_level (float): The level of noise to apply to the image.
+
+    Returns:
+        Tensor: The noisy image tensor.
+    """
     for noise_type in mix_noise_types:
         image = add_noise(image, noise_type, noise_level)
     return image
@@ -223,26 +235,17 @@ def inception(path, device, noise_levels, noise_types):
 
 
 def get_noise_types(noise_types_string):
-    noise_types = []
-    i = 0
-    n = len(noise_types_string)
+    """
+    Extracts noise types from a given noise types string using a regular expression pattern.
 
-    while i < n:
-        if noise_types_string[i].isspace():
-            i += 1
-            continue
-        if noise_types_string[i] == "m" and noise_types_string[i : i + 3] == "mix":
-            start = i
-            while i < n and noise_types_string[i] != "]":
-                i += 1
-            i += 1
-            noise_types.append(noise_types_string[start:i])
-        else:
-            start = i
-            while i < n and not noise_types_string[i].isspace():
-                i += 1
-            noise_types.append(noise_types_string[start:i])
+    Parameters:
+        noise_types_string (str): A string containing noise types.
 
+    Returns:
+        List: A list of noise types extracted from the input string.
+    """
+    pattern = r"\bmix[^\]]*\]|\S+"
+    noise_types = re.findall(pattern, noise_types_string)
     return noise_types
 
 
@@ -265,7 +268,7 @@ def compute_features(args):
         args.noise.append(0.0)
     args.noise.sort()
 
-    args.noise_types = get_noise_types(args.noise_types)
+    args.noise_types = get_noise_types(args.noise_types.replace(",", ""))
     if "all" in args.noise_types:
         args.noise_types.extend(["gauss", "blur", "swirl", "rectangles", "salt_and_pepper"])
         args.noise_types.remove("all")
