@@ -222,6 +222,30 @@ def inception(path, device, noise_levels, noise_types):
     return features_dict
 
 
+def get_noise_types(noise_types_string):
+    noise_types = []
+    i = 0
+    n = len(noise_types_string)
+
+    while i < n:
+        if noise_types_string[i].isspace():
+            i += 1
+            continue
+        if noise_types_string[i] == "m" and noise_types_string[i : i + 3] == "mix":
+            start = i
+            while i < n and noise_types_string[i] != "]":
+                i += 1
+            i += 1
+            noise_types.append(noise_types_string[start:i])
+        else:
+            start = i
+            while i < n and not noise_types_string[i].isspace():
+                i += 1
+            noise_types.append(noise_types_string[start:i])
+
+    return noise_types
+
+
 def compute_features(args):
     """
     Computes features for real and fake images, optionally adding noise, and saves them to a file.
@@ -241,9 +265,10 @@ def compute_features(args):
         args.noise.append(0.0)
     args.noise.sort()
 
-    args.noise_types = args.noise_types.replace(",", "").split()
+    args.noise_types = get_noise_types(args.noise_types)
     if "all" in args.noise_types:
-        args.noise_types = ["gauss", "blur", "swirl", "rectangles", "salt_and_pepper"]
+        args.noise_types.extend(["gauss", "blur", "swirl", "rectangles", "salt_and_pepper"])
+
     if args.real:
         if not args.fake:
             try:
@@ -293,7 +318,7 @@ if __name__ == "__main__":
         "mix [swirl, rectangles]",
         "mix [rectangles, swirl]",
     ]
-    
+
     fig, axs = plt.subplots(len(noise_types), 11, figsize=(20, 15))
 
     image = next(load_and_preprocess_image(".", preprocess))
