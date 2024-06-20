@@ -1,7 +1,7 @@
 # FID-Evaluator
 The FID Evaluator is a tool for evaluating the Fréchet Inception Distance (FID). The FID is used to evaluate the quality of synthesized to real images. 
 To do this, the feature vectors of the images are first calculated using the [Inception v3](https://en.wikipedia.org/wiki/Inceptionv3) model and then a value is determined using the following formula:
-$$d_F\left(\mathcal{N}\left(\mu, \sum\right), \mathcal{N}\left(\mu', \sum'\right)\right)^2 = ||\mu - \mu'||_2^2 + \text{tr}\left(\sum + \sum' - 2\left(\sum\sum'\right)^{\frac{1}{2}}\right)$$
+$$d_F\left(\mathcal{N}\left(\mu, \sum\right), \mathcal{N}\left(\mu', \sum'\right)\right)^2 = ||\mu - \mu'||_2^2 + \text{tr}\left(\sum + \sum' - 2\left(\sum\sum'\right)^{\frac{1}{2}}\right).$$
 
 We use a principal component analysis (PCA) to reduce the embedding space in order to better match the dimensional space (2048 dimensions) to the real images.
 To evaluate this, we noise the synthesized images and compare the percentage increase starting from the first FID value of the respective dimensional reduction of the embedding space.
@@ -42,7 +42,7 @@ python -m src.main compute_features -r /path/to/real/images -f /path/to/fake/ima
 | -f / --fake | Path to the fake images | |
 | -d / --device | Device to use: cpu or cuda | If no device is specified, cuda is used if it is available, otherwise cpu. |
 | --noise | The level of distortion, e.g. "0.25 0.5". | See the differences of the levels [here](#explanation). Default: "0.0 0.1 0.2 0.3 0.4". |
-| --noise_types | The type of distortion. | See the differences of the types [here](#explanation). Default: "gauss". If "all", every noise type will be used. |
+| --noise_types | The type of distortion. | See the differences of the types [here](#explanation). Default: "gauss". If "all", every noise type will be used. With "mix [swirl, rectangles]", the noise types in brackets can be used in this exact order. |
 
 This will compute features from the specified real and fake images, with optional noise applied. The computed features will be saved to a pickle file.
 
