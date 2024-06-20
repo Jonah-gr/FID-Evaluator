@@ -41,8 +41,8 @@ python -m src.main compute_features -r /path/to/real/images -f /path/to/fake/ima
 | -r / --real | Path to the real images | |
 | -f / --fake | Path to the fake images | |
 | -d / --device | Device to use: cpu or cuda | If no device is specified, cuda is used if it is available, otherwise cpu. |
-| --noise | The level of distortion, e.g. "0.25 0.5". | See the differences of the levels [here](#explanation). Default: "0.0 0.1 0.2 0.3 0.4". |
-| --noise_types | The type of distortion. | See the differences of the types [here](#explanation). Default: "gauss". If "all", every noise type will be used. With "mix [swirl, rectangles]", the noise types in brackets can be used in this exact order. |
+| --noise | The level of distortion, e.g. "0.25 0.5". | See the differences of the levels [here](/public/Figure_1.png). Default: "0.0 0.1 0.2 0.3 0.4". |
+| --noise_types | The type of distortion. | See the differences of the types [here](/public/Figure_1.png). Default: "gauss". If "all", every noise type will be used. With "mix [swirl, rectangles]", the noise types in brackets can be used in this exact order. |
 
 This will compute features from the specified real and fake images, with optional noise applied. The computed features will be saved to a pickle file.
 
