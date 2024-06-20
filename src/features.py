@@ -10,7 +10,7 @@ from PIL import Image, ImageFilter, ImageDraw
 from skimage.transform import swirl
 
 
-def add_noise(image, noise_level, noise_type):
+def add_noise(image, noise_type, noise_level):
     """
     Adds specified noise to an image.
 
@@ -24,7 +24,6 @@ def add_noise(image, noise_level, noise_type):
     """
     if noise_level == 0.0:
         return image
-    image = image.squeeze(0)
     if noise_type == "gauss":
         noisy_image = image + noise_level * torch.randn_like(image)
         noisy_image = torch.clamp(noisy_image, 0.0, 1.0)
@@ -36,10 +35,13 @@ def add_noise(image, noise_level, noise_type):
         noisy_image = apply_swirl(image, noise_level)
     elif noise_type == "salt_and_pepper":
         noisy_image = apply_salt_and_pepper(image, noise_level)
+    elif noise_type.startswith("mix"):
+        mix_noise_types = noise_type.replace(",", "")[5:-1].split()
+        noisy_image = apply_mix_noise(image, mix_noise_types, noise_level)
     else:
         raise ValueError(f"Unknown noise type: {noise_type}")
 
-    return noisy_image.unsqueeze(0)
+    return noisy_image
 
 
 def apply_gaussian_blur(image, noise_level):
@@ -142,6 +144,12 @@ def apply_salt_and_pepper(image, noise_level):
     return transforms.ToTensor()(noisy_image_pil)
 
 
+def apply_mix_noise(image, mix_noise_types, noise_level):
+    for noise_type in mix_noise_types:
+        image = add_noise(image, noise_type, noise_level)
+    return image
+
+
 def load_and_preprocess_image(img_path, transform):
     """
     Loads and preprocesses an image.
@@ -202,8 +210,8 @@ def inception(path, device, noise_levels, noise_types):
                     desc=f"Noise Type: {noise_type} | Noise Level: {noise_level}",
                     total=len(os.listdir(path)),
                 ):
-                    img = add_noise(img, noise_level, noise_type)
-                    img = img.to(device)
+                    img = add_noise(img.squeeze(0), noise_type, noise_level)
+                    img = img.unsqueeze(0).to(device)
                     feature = model(img).cpu().numpy().flatten()
                     features.append(feature)
                 features_dict[noise_type][noise_level] = features
@@ -276,13 +284,27 @@ if __name__ == "__main__":
 
     preprocess = transforms.Compose([transforms.Resize(299), transforms.CenterCrop(299), transforms.ToTensor()])
 
-    fig, axs = plt.subplots(5, 10, figsize=(20, 12))
-    noise_types = ["gauss", "blur", "swirl", "rectangles", "salt_and_pepper"]
+    noise_types = [
+        "gauss",
+        "blur",
+        "swirl",
+        "rectangles",
+        "salt_and_pepper",
+        "mix [swirl, rectangles]",
+        "mix [rectangles, swirl]",
+    ]
+    
+    fig, axs = plt.subplots(len(noise_types), 11, figsize=(20, 15))
 
     image = next(load_and_preprocess_image(".", preprocess))
-    for i in range(5):
-        for k in np.arange(0.0, 1.0, 0.1):
-            img = add_noise(image, k, noise_types[i])
-            img = transforms.ToPILImage()(img.squeeze(0)).convert("RGB")
+    for i in range(len(noise_types)):
+        for k in np.arange(0.0, 1.1, 0.1):
+            img = add_noise(image.squeeze(0), noise_types[i], k)
+            img = transforms.ToPILImage()(img).convert("RGB")
+            axs[0][int(k * 10)].set_title(f"{np.round(k, 1)}")
+            axs[i][0].set_ylabel(f"{noise_types[i]}", rotation="horizontal", ha="right")
+            axs[i][int(k * 10)].set_xticks([])
+            axs[i][int(k * 10)].set_yticks([])
             axs[i][int(k * 10)].imshow(img)
+
     plt.show()

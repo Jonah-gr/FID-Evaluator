@@ -103,9 +103,7 @@ def plot_percentage_increases(noise_levels, data_dict):
         for n_components, fid_scores in noise_data.items():
             y_values_noise = calculate_percentage_increases(fid_scores)
             ax1.plot(noise_levels, y_values_noise, marker="o", label=f"{n_components} components")
-        # ax1.set_title(f"Noise Type: {noise_type} - Percentage Increase vs. Noise Levels")
-        # ax1.set_xlabel("Noise level")
-        # ax1.set_ylabel("Percentage Increase")
+        ax1.set_ylabel(f"{noise_type}", rotation="horizontal", ha="right")
         ax1.grid(True)
 
         ax2 = axes[i, 1]
@@ -115,10 +113,26 @@ def plot_percentage_increases(noise_levels, data_dict):
             y_values_components.append(np.mean(calculate_percentage_increases(fid_scores)[1:]))
             x_values_components.append(n_components)
         ax2.plot(x_values_components, y_values_components, marker="o")
-        # ax2.set_title(f"Noise Type: {noise_type} - Mean Percentage Increase vs. n_components")
-        # ax2.set_xlabel("n_components")
-        # ax2.set_ylabel("Mean Percentage Increase")
         ax2.grid(True)
     axes[0, 0].legend()
     fig.tight_layout()
     plt.show()
+
+
+if __name__ == "__main__":
+    import cProfile
+    import pstats
+    import io
+
+    pr = cProfile.Profile()
+    pr.enable()
+
+    my_result = get_fid_scores()
+
+    pr.disable()
+    s = io.StringIO()
+    ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
+    ps.print_stats()
+
+    with open("cProfile.txt", "w+") as f:
+        f.write(s.getvalue())
