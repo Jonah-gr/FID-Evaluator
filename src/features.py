@@ -268,7 +268,7 @@ def compute_features(args):
     args.noise_types = get_noise_types(args.noise_types)
     if "all" in args.noise_types:
         args.noise_types.extend(["gauss", "blur", "swirl", "rectangles", "salt_and_pepper"])
-        args.noisse_types.remove("all")
+        args.noise_types.remove("all")
 
     if args.real:
         if not args.fake:
