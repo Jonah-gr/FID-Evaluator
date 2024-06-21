@@ -276,7 +276,7 @@ def compute_features(args):
     if args.real:
         if not args.fake:
             try:
-                with open("features.pkl", "rb") as f:
+                with open(args.pkl_file, "rb") as f:
                     features = pickle.load(f)
                     fake_features = features["fake"]["no pca"]
             except:
@@ -287,7 +287,7 @@ def compute_features(args):
     if args.fake:
         if not args.real:
             try:
-                with open("features.pkl", "rb") as f:
+                with open(args.pkl_file, "rb") as f:
                     features = pickle.load(f)
                     real_features = features["real"]["no pca"]
                     print("Previous real features found")
@@ -296,9 +296,9 @@ def compute_features(args):
         print("Fake images:")
         fake_features = inception(args.fake, args.device, args.noise, args.noise_types)
 
-    with open("features.pkl", "wb") as f:
+    with open(args.pkl_file, "wb") as f:
         pickle.dump({"real": {"no pca": real_features}, "fake": {"no pca": fake_features}}, f)
-    print("Features saved to features.pkl")
+    print(f"Features saved to {args.pkl_file}")
 
 
 if __name__ == "__main__":

@@ -24,6 +24,8 @@ parser.add_argument(
 
 parser.add_argument("-n", "--n_components", action="store", default="100")
 
+parser.add_argument("--pkl_file", action="store", default="features.pkl")
+
 args = parser.parse_args()
 
 if args.mode == "compute_features":
@@ -33,4 +35,4 @@ if args.mode == "pca":
     run_pca(args)
 
 if args.mode == "fid":
-    get_fid_scores()
+    get_fid_scores(args)

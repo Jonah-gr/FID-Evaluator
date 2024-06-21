@@ -36,14 +36,14 @@ def convert_to_nested_defaultdict(d):
         return d
 
 
-def load_features():
+def load_features(pkl_file):
     """
     Load features from a pickle file and convert them to a nested defaultdict.
 
     Returns:
         defaultdict: A nested defaultdict containing the loaded features.
     """
-    with open("features.pkl", "rb") as file:
+    with open(pkl_file, "rb") as file:
         features = pickle.load(file)
     return convert_to_nested_defaultdict(features)
 
@@ -58,7 +58,7 @@ def run_pca(args):
     Returns:
         None
     """
-    features = load_features()
+    features = load_features(args.pkl_file)
     real_features = features["real"]
     fake_features = features["fake"]
 
@@ -78,6 +78,6 @@ def run_pca(args):
                     fake_features["no pca"][noise_type][noise_level]
                 )
 
-    with open("features.pkl", "wb") as f:
+    with open(args.pkl_file, "wb") as f:
         pickle.dump(features, f)
-        print("All features saved to features.pkl")
+        print(f"All features saved to {args.pkl_file}")

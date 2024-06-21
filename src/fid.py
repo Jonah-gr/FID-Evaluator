@@ -27,7 +27,7 @@ def calculate_fid(real_features, generated_features):
     return fid
 
 
-def get_fid_scores():
+def get_fid_scores(args):
     """
     Load features from a pickle file and calculate FID scores for various noise types and levels.
     Plot the percentage increase in FID scores.
@@ -35,7 +35,7 @@ def get_fid_scores():
     Returns:
         None
     """
-    with open("features.pkl", "rb") as file:
+    with open(args.pkl_file, "rb") as file:
         features = pickle.load(file)
     fid_scores = {}
 
