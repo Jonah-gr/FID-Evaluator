@@ -36,13 +36,14 @@ To compute features from real and fake images, use the compute_features mode:
 python -m src.main compute_features -r /path/to/real/images -f /path/to/fake/images --noise "0.25 0.5" --noise_types all
 ```
 
-| Command | Description | Tip |
-| --- | --- | --- |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Command&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| Description | Tip |
+|    :-:    | --- | --- |
 | -r / --real | Path to the real images | |
 | -f / --fake | Path to the fake images | |
 | -d / --device | Device to use: cpu or cuda | If no device is specified, cuda is used if it is available, otherwise cpu. |
-| --noise | The level of distortion, e.g. "0.25 0.5". | See the differences of the levels [here](/public/Figure_1.png). Default: "0.0 0.1 0.2 0.3 0.4". |
-| --noise_types | The type of distortion. | See the differences of the types [here](/public/Figure_1.png). Default: "gauss". If "all", every noise type will be used. With "mix [swirl, rectangles]", the noise types in brackets can be used in this exact order. |
+| --noise | The level of distortion, e.g. "0.25 0.5" | See the differences of the levels [here](/public/Figure_1.png). Default: "0.0 0.1 0.2 0.3 0.4". |
+| --noise_types | The type of distortion | See the differences of the types [here](/public/Figure_1.png). Default: "gauss". If "all", every noise type will be used. With "mix [swirl, rectangles]", the noise types in brackets can be used in this exact order. |
+| --pkl_file | Path to the pickle file | Default: "features.pkl" |
 
 This will compute features from the specified real and fake images, with optional noise applied. The computed features will be saved to a pickle file.
 
@@ -56,8 +57,9 @@ python -m src.main pca -n "10 25 50 100 200 300"
 ```
 
 | Command | Description | Tip |
-| --- | --- | --- |
+| :-: | --- | --- |
 | -n / --n_components | The dimensions to which the feature vectors are reduced | Default: 100 |
+| --pkl_file | Path to the pickle file | Default: "features.pkl" |
 
 This will perform PCA on the computed features with the specified number of components. The transformed features will be saved back to the pickle file.
 
@@ -69,6 +71,10 @@ To calculate the FID score, use the fid mode:
 ```bash
 python -m src.main fid
 ```
+
+| Command | Description | Tip |
+| :-: | --- | --- |
+| --pkl_file | Path to the pickle file | Default: "features.pkl" |
 
 This will load the features from the pickle file and calculate the FID score for the different noise types and levels. 
 The plots will show the percentage increase of the FID scores and not the FID itself.
