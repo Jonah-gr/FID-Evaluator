@@ -58,7 +58,7 @@ python -m src.main pca -n "10 25 50 100 200 300"
 
 | Command | Description | Tip |
 | :-: | --- | --- |
-| -n / --n_components | The dimensions to which the feature vectors are reduced | Default: 100 |
+| -n / --n_components | The dimensions to which the feature vectors are reduced | Default: 100. With e.g. `-n "range(2, 7, 2), 3"`, `2, 3, 4, 6` are used as n_components. "range" works here as in basic python. |
 | --pkl_file | Path to the pickle file | Default: "features.pkl" |
 
 This will perform PCA on the computed features with the specified number of components. The transformed features will be saved back to the pickle file.
