@@ -1,3 +1,4 @@
+import re
 import pickle
 from collections import defaultdict
 from tqdm import tqdm
@@ -48,6 +49,28 @@ def load_features(pkl_file):
     return convert_to_nested_defaultdict(features)
 
 
+def get_n_components(n_components_string):
+    """
+    Parse a string containing a list of integers or ranges and return a list of integers.
+    
+    Args:
+        n_components_string (str): A string containing a list of integers or ranges.
+        
+    Returns:
+        list: A list of integers extracted from the input string.
+    """
+    pattern = re.compile(r"(\d+|range\(\d+,\s*\d+(?:,\s*\d+)?\))")
+    matches = pattern.findall(n_components_string)
+    n_components = []
+    for match in matches:
+        match = match.strip()
+        if match.startswith("range"):
+            n_components.extend(list(eval(match)))
+        else:
+            n_components.append(int(match))
+    return n_components
+
+
 def run_pca(args):
     """
     Perform PCA on the features and save the transformed features back to the pickle file.
@@ -62,11 +85,18 @@ def run_pca(args):
     real_features = features["real"]
     fake_features = features["fake"]
 
-    args.n_components = args.n_components.replace(",", "").split()
-    args.n_components = [int(num) for num in args.n_components]
+    args.n_components = get_n_components(args.n_components)
 
     noise_types = fake_features["no pca"].keys()
     noise_levels = fake_features["no pca"][list(noise_types)[0]].keys()
+
+    try:
+        found_n_components = list(real_features["pca"].keys())
+        args.n_components = sorted([n for n in args.n_components if n not in found_n_components])
+        if len(found_n_components) > 0:
+            print("n_components found: ", found_n_components)
+    except Exception as e:
+        print(e)
 
     for n_components in args.n_components:
         pca = PCA(n_components=n_components)
