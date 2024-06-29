@@ -40,11 +40,15 @@ def get_fid_scores(args):
     fid_scores = {}
 
     noise_types = features["fake"]["no pca"].keys()
-    noise_levels = features["fake"]["no pca"][list(noise_types)[0]].keys()
+
+    noise_levels = defaultdict()
+    for noise_type in noise_types:
+        noise_levels[noise_type] = features["fake"]["no pca"][noise_type].keys()
+    print(noise_levels)
 
     for noise_type in noise_types:
         fid_scores[noise_type] = defaultdict(list)
-        for noise_level in noise_levels:
+        for noise_level in noise_levels[noise_type]:
             fid_scores[noise_type][2048].append(
                 calculate_fid(features["real"]["no pca"], features["fake"]["no pca"][noise_type][noise_level])
             )
@@ -102,7 +106,8 @@ def plot_percentage_increases(noise_levels, data_dict):
         ax1 = axes[i, 0]
         for n_components, fid_scores in noise_data.items():
             y_values_noise = calculate_percentage_increases(fid_scores)
-            ax1.plot(noise_levels, y_values_noise, marker="o", label=f"{n_components} components")
+            ax1.plot(range(len(y_values_noise)), y_values_noise, marker="o", label=f"{n_components} components")
+            ax1.set_xticks(range(len(y_values_noise)), noise_levels[noise_type])
         ax1.set_ylabel(f"{noise_type}", rotation="horizontal", ha="right")
         ax1.grid(True)
 

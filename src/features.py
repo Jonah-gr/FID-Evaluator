@@ -157,8 +157,12 @@ def apply_mix_noise(image, mix_noise_types, noise_level):
     Returns:
         Tensor: The noisy image tensor.
     """
-    for noise_type in mix_noise_types:
-        image = add_noise(image, noise_type, noise_level)
+    if type(noise_level) == tuple:
+        for noise_type, noise_level in zip(mix_noise_types, noise_level):
+            image = add_noise(image, noise_type, noise_level)
+    else:
+        for noise_type in mix_noise_types:
+            image = add_noise(image, noise_type, noise_level)
     return image
 
 
@@ -217,18 +221,19 @@ def inception(path, device, noise_levels, noise_types):
         for noise_type in noise_types:
             for noise_level in noise_levels:
                 features = []
-                for img in tqdm(
-                    load_and_preprocess_image(path, preprocess),
-                    desc=f"Noise Type: {noise_type} | Noise Level: {noise_level}",
-                    total=len(os.listdir(path)),
-                ):
-                    img = add_noise(img.squeeze(0), noise_type, noise_level)
-                    img = img.unsqueeze(0).to(device)
-                    feature = model(img).cpu().numpy().flatten()
-                    features.append(feature)
-                features_dict[noise_type][noise_level] = features
-                with open(f"checkpoints/checkpoint_{'real' if real_features else 'fake'}.pkl", "wb") as f:
-                    pickle.dump(features_dict, f)
+                if (noise_type.startswith("mix") and type(noise_level) == tuple) or type(noise_level) == float:
+                    for img in tqdm(
+                        load_and_preprocess_image(path, preprocess),
+                        desc=f"Noise Type: {noise_type} | Noise Level: {noise_level}",
+                        total=len(os.listdir(path)),
+                    ):
+                        img = add_noise(img.squeeze(0), noise_type, noise_level)
+                        img = img.unsqueeze(0).to(device)
+                        feature = model(img).cpu().numpy().flatten()
+                        features.append(feature)
+                    features_dict[noise_type][noise_level] = features
+                    with open(f"checkpoints/checkpoint_{'real' if real_features else 'fake'}.pkl", "wb") as f:
+                        pickle.dump(features_dict, f)
     if real_features:
         return features_dict["no noise"][0.0]
     return features_dict
@@ -249,6 +254,31 @@ def get_noise_types(noise_types_string):
     return noise_types
 
 
+def get_noise_levels(noise_levels_string):
+    """
+    Extracts noise levels from a given noise levels string using a regular expression pattern.
+
+    Parameters:
+        noise_levels_string (str): A string containing noise levels.
+
+    Returns:
+        List: A list of noise levels extracted from the input string.
+    """
+    pattern = r'\([^()]+\)|\d*\.\d+|\d+'
+    matches = re.findall(pattern, noise_levels_string)
+    
+    noise_levels = [0.0]
+    for match in matches:
+        if '(' in match:
+            noise_levels.append(eval(match))
+        else:
+            value = float(match)
+            if value != 0.0:
+                noise_levels.append(value)
+    
+    return noise_levels
+
+
 def compute_features(args):
     """
     Computes features for real and fake images, optionally adding noise, and saves them to a file.
@@ -262,11 +292,7 @@ def compute_features(args):
     real_features = {}
     fake_features = {}
 
-    args.noise = args.noise.replace(",", "").split()
-    args.noise = [float(num) for num in args.noise]
-    if 0.0 not in args.noise:
-        args.noise.append(0.0)
-    args.noise.sort()
+    args.noise = get_noise_levels(args.noise)
 
     args.noise_types = get_noise_types(args.noise_types.replace(",", ""))
     if "all" in args.noise_types:

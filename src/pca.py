@@ -88,7 +88,6 @@ def run_pca(args):
     args.n_components = get_n_components(args.n_components)
 
     noise_types = fake_features["no pca"].keys()
-    noise_levels = fake_features["no pca"][list(noise_types)[0]].keys()
 
     try:
         found_n_components = list(real_features["pca"].keys())
@@ -103,7 +102,7 @@ def run_pca(args):
         real_features["pca"][n_components] = pca.fit_transform(real_features["no pca"])
 
         for noise_type in tqdm(noise_types, desc=f"n_components: {n_components}"):
-            for noise_level in noise_levels:
+            for noise_level in fake_features["no pca"][noise_type].keys():
                 fake_features["pca"][n_components][noise_type][noise_level] = pca.transform(
                     fake_features["no pca"][noise_type][noise_level]
                 )
