@@ -190,7 +190,7 @@ def load_and_preprocess_image(img_path, transform):
                     print(f"Error loading image {file_path}: {e}")
 
 
-def inception(path, device, noise_levels, noise_types):
+def inception(path, device, noise_levels, noise_types, inital_value=None):
     """
     Extracts features from images using the Inception v3 model with optional noise.
 
@@ -215,7 +215,7 @@ def inception(path, device, noise_levels, noise_types):
     model.to(device)
 
     preprocess = transforms.Compose([transforms.Resize(299), transforms.CenterCrop(299), transforms.ToTensor()])
-    features_dict = {k: {} for k in noise_types}
+    features_dict = {k: {} for k in noise_types} if real_features else {k: {0.0: inital_value} for k in noise_types}
 
     with torch.no_grad():
         for noise_type in noise_types:
@@ -267,7 +267,7 @@ def get_noise_levels(noise_levels_string):
     pattern = r'\([^()]+\)|\d*\.\d+|\d+'
     matches = re.findall(pattern, noise_levels_string)
     
-    noise_levels = [0.0]
+    noise_levels = []
     for match in matches:
         if '(' in match:
             noise_levels.append(eval(match))
@@ -320,7 +320,7 @@ def compute_features(args):
             except:
                 print("No previous real features found")
         print("Fake images:")
-        fake_features = inception(args.fake, args.device, args.noise, args.noise_types)
+        fake_features = inception(args.fake, args.device, args.noise, args.noise_types, inital_value=inception(args.fake, args.device, [0.0], ["fake"])["fake"][0.0])
 
     with open(args.pkl_file, "wb") as f:
         pickle.dump({"real": {"no pca": real_features}, "fake": {"no pca": fake_features}}, f)
