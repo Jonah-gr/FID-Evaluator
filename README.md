@@ -1,6 +1,6 @@
 # FID-Evaluator
-The FID Evaluator is a tool for evaluating the Fréchet Inception Distance (FID). The FID is used to evaluate the quality of synthesized to real images. 
-To do this, the feature vectors of the images are first calculated using the [Inception v3](https://en.wikipedia.org/wiki/Inceptionv3) model and then a value is determined using the following formula:
+The FID Evaluator is a tool for evaluating the Fréchet Inception Distance (FID). The FID is a metric to evaluate the quality of synthesized to real images. 
+To do this, the feature vectors of the images are first calculated using the [Inception v3](https://en.wikipedia.org/wiki/Inceptionv3) model and then the FID is determined by comparing the mean values and the covariances using the following formula:
 $$d_F\left(\mathcal{N}\left(\mu, \sum\right), \mathcal{N}\left(\mu', \sum'\right)\right)^2 = ||\mu - \mu'||_2^2 + \text{tr}\left(\sum + \sum' - 2\left(\sum\sum'\right)^{\frac{1}{2}}\right).$$
 
 We use a principal component analysis (PCA) to reduce the embedding space in order to better match the dimensional space (2048 dimensions) to the real images.
@@ -41,7 +41,7 @@ python -m src.main compute_features -r /path/to/real/images -f /path/to/fake/ima
 | -r / --real | Path to the real images | |
 | -f / --fake | Path to the fake images | |
 | -d / --device | Device to use: cpu or cuda | If no device is specified, cuda is used if it is available, otherwise cpu. |
-| --noise | The level of distortion, e.g. "0.25 0.5" | See the differences of the levels [here](/public/Figure_1.png). Default: "0.0 0.1 0.2 0.3 0.4". |
+| --noise | The level of distortion, e.g. "0.25 0.5" | See the differences of the levels [here](/public/Figure_1.png). Default: "0.0 0.1 0.2 0.3 0.4". Mix noise types also accept tuples, so that the different applied noise types can be applied with different noise levels.|
 | --noise_types | The type of distortion | See the differences of the types [here](/public/Figure_1.png). Default: "gauss". If "all", every noise type will be used. With "mix [swirl, rectangles]", the noise types in brackets can be used in this exact order. |
 | --pkl_file | Path to the pickle file | Default: "features.pkl" |
 
