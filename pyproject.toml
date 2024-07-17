@@ -32,8 +32,8 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "numpy >= 1.26.1",
-    "tqdm >= 4.65.0",
+    "numpy >= 1.26.1, <2.0.0",
+    "tqdm >= 4.66.3",
     "scikit-learn >= 1.4.2",
     "scikit-image >= 0.20.0",
     "pillow >= 9.4.0",
