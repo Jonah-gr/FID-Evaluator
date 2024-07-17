@@ -1,0 +1,87 @@
+# see documentation, e.g.
+# - https://packaging.python.org/en/latest/specifications/declaring-project-metadata/#declaring-project-metadata
+# - https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+# - https://www.python.org/dev/peps/pep-0621/
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]  # list of folders that contain the packages (["."] by default)
+exclude = []  # exclude packages matching these glob patterns (empty by default)
+namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
+
+[project]
+authors = [
+    { name = "Jonah Gräfe", email = "jonah.graefe@study.hs-duesseldorf.de" },
+    { name = "Niels Wulf", email = "niels.wulf@study.hs-duesseldorf.de" },
+    { name = "Nikolas Predescu", email = "nikolas.predescu@study.hs-duesseldorf.de" }
+]
+
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "numpy >= 1.26.1",
+    "tqdm >= 4.65.0",
+    "scikit-learn >= 1.4.2",
+    "scikit-image >= 0.20.0",
+    "pillow >= 9.4.0",
+    "matplotlib >= 3.7.2",
+    "scipy >= 1.11.1",
+    "torch >= 2.1.0",
+    "torchvision >= 0.16.0",
+    "requests >= 2.31.0",
+    "pytest >= 7.4.1"
+]
+
+description = "The FID-Evaluator is a tool to analyze how the FID behaves when the embedding space is reduced."
+license = {file = "LICENSE"}
+name = "FID-Evaluator"
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.8"
+version = "0.1.0"
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "flake8",
+    "isort",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+]
+publishing = [
+    "build",
+    "twine",
+    "wheel",
+]
+
+[tool.black]
+line-length = 120
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+)/
+'''
+
+[tool.isort]
+profile = "black"
+known_first_party = "FID-Evaluator"
+packages = ["FID-Evaluator"]
+src_paths = ["FID-Evaluator", "test"]
+line_length = "100"
+
+[tool.pylint]  # If you opt to use pylint
+# Pylint configuration options
