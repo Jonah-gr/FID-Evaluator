@@ -24,7 +24,7 @@ Clone the repository and install the dependencies using pip:
 ```bash
 git clone https://github.com/Jonah-gr/FID-Evaluator.git
 cd FID-Evaluator
-pip install -r requirements.txt
+pip install .
 ```
 
 # Usage
