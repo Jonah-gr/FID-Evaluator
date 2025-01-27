@@ -1,6 +1,7 @@
 # FID-Evaluator
 The FID Evaluator is a tool for evaluating the Fréchet Inception Distance (FID). The FID is a metric to evaluate the quality of synthesized to real images. 
 To do this, the feature vectors of the images are first calculated using the [Inception v3](https://en.wikipedia.org/wiki/Inceptionv3) model and then the FID is determined by comparing the mean values and the covariances using the following formula:
+
 $$d_F\left(\mathcal{N}\left(\mu, \sum\right), \mathcal{N}\left(\mu', \sum'\right)\right)^2 = ||\mu - \mu'||_2^2 + \text{tr}\left(\sum + \sum' - 2\left(\sum\sum'\right)^{\frac{1}{2}}\right).$$
 
 We use a principal component analysis (PCA) to reduce the embedding space in order to better match the dimensional space (2048 dimensions) to the real images.
